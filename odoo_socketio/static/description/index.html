@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <div class="header">
+        <h1>Odoo SocketIo</h1>
+        <p>Real-time bidirectional communication for Odoo using Socket.IO technology</p>
+    </div>
+
+    <div class="screenshot">
+        <img src="icon.png" alt="Odoo SocketIo Interface" style="max-width: 100%; height: 200px"/>
+    </div>
+
+    <div class="section">
+        <h2>Overview</h2>
+        <p>This module integrates Socket.IO with Odoo to enable real-time, event-based communication between the server and web clients. Perfect for building interactive features like live notifications, chat systems, and real-time updates.</p>
+    </div>
+
+    <div class="section">
+        <h2>Key Features</h2>
+        <div class="features">
+            <div class="feature-card">
+                <h3>Real-time Communication</h3>
+                <p>Instant message delivery between server and clients using WebSocket technology.</p>
+            </div>
+            <div class="feature-card">
+                <h3>User-based Messaging</h3>
+                <p>Target messages to specific users with built-in user connection management.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Room Support</h3>
+                <p>Organize communication channels with room-based messaging.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Easy Integration</h3>
+                <p>Simple JavaScript API for client-side integration with existing Odoo views.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="screenshot">
+        <img src="img_2.png" alt="Configuration Settings" style="max-width: 100%;">
+    </div>
+
+    <div class="section">
+        <h2>Usage Examples</h2>
+
+        <h3>Server-side Python Example</h3>
+        <div class="code-block">
+// Send real-time notification to user
+self.env['odoo.socketio'].push_socketio_event({
+    'event': 'user_notification',
+    'data': {'message': 'Your order has shipped!'},
+    'uid': user.id
+})
+        </div>
+
+        <h3>Client-side JavaScript Example</h3>
+        <div class="code-block">
+// In your Odoo component
+setup() {
+    this.socketioService = useService('socketio_service');
+    this.socketioService.on('user_notification', (data) => {
+        this.env.services.notification.add(data.message);
+    });
+}
+        </div>
+    </div>
+
+    <div class="screenshot">
+        <img src="img_3.png" alt="Test Interface" style="width: 80%; height: 400px;">
+    </div>
+
+    <div class="section">
+        <h2>Technical Details</h2>
+        <ul>
+            <li><strong>Requires:</strong> Odoo 18.0+, python-socketio 5.13.0</li>
+            <li><strong>License:</strong> AGPL-3</li>
+            <li><strong>WebSocket Support:</strong> Yes (with fallback to long-polling)</li>
+            <li><strong>Performance:</strong> Runs in main Odoo process (recommend separate process for heavy loads)</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Installation</h2>
+        <ol>
+            <li>Install via Odoo Apps</li>
+            <li>Configure port in Odoo config file:
+                <div class="code-block">
+[options]
+socketio_port = 3000
+                </div>
+            </li>
+            <li>Install Python dependency:
+                <div class="code-block">
+pip install python-socketio==5.13.0
+                </div>
+            </li>
+        </ol>
+    </div>
+</body>
+</html>

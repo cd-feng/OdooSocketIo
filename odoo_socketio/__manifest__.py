@@ -20,7 +20,7 @@
         'views/res_users.xml'
     ],
     'images': [
-        'static/description/image_1.png',
+        'static/description/icon.png',
     ],
     'assets': {
         'web.assets_backend': [

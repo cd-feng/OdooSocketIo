@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-import time
 import threading
 import asyncio
-import odoo
 import socketio
 import queue
 import multiprocessing
@@ -163,6 +161,18 @@ class OdooSocketIo(models.Model):
             event, sid, data = SOCKETIO_CLIENT_EVENT_MESSAGE_QUEUE.get()
             with self.pool.cursor() as new_cr:
                 self = self.with_env(self.env(cr=new_cr))
-                print(f"收到客户端事件：{event}  SID：{sid}  Data：{data}")
+                # Here you can add the logic code for handling default events
+                if not event or not data:
+                    continue
+                # Call other custom event methods
+                else:
+                    self.deal_custom_event(event, sid, data)
             SOCKETIO_CLIENT_EVENT_MESSAGE_QUEUE.task_done()
 
+    @api.model
+    def deal_custom_event(self, event, sid, data):
+        """
+        Handle custom events, other modules call this function for extension
+        When calling a subclass, be sure to call the parent class message processing function
+        """
+        logging.debug(f"deal custom msg {event} {sid} {data}")
