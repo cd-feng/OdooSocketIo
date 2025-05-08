@@ -17,7 +17,7 @@
     },
     'data': [
         'security/ir.model.access.csv',
-        'views/res_users.xml'
+        # 'views/res_users.xml'
     ],
     'images': [
         'static/description/icon.png',

@@ -1,7 +1,7 @@
 /** @odoo-module **/
 import { registry } from "@web/core/registry";
 
-export const odooSocketIoUserMessageTest = {
+export const odooSocketIoUserMessage = {
     dependencies: ["socketio_service"],
 
     start(env) {
@@ -9,12 +9,16 @@ export const odooSocketIoUserMessageTest = {
         const socketio_service = env.services.socketio_service;
         const notification = env.services.notification;
 
-        function onUserTestEvent(msg) {
-            notification.add(msg.text, { type: "info" });
+        function onUserNotifyEvent(data) {
+            notification.add(data.message, {
+                title: data.title,
+                type: data.type || 'info',
+                sticky: data.sticky,
+            });
         }
 
         const eventHandlers = {
-            "odoo_user_test_event": onUserTestEvent,
+            "odoo_user_notify_event": onUserNotifyEvent,
         };
 
         for (const [eventName, handler] of Object.entries(eventHandlers)) {
@@ -29,4 +33,4 @@ export const odooSocketIoUserMessageTest = {
     }
 };
 
-registry.category("services").add("odoo_socketio_user_msg_t", odooSocketIoUserMessageTest);
+registry.category("services").add("odoo_socketio_user_notify_msg", odooSocketIoUserMessage);
