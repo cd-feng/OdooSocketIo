@@ -7,8 +7,7 @@ import queue
 import multiprocessing
 from urllib.parse import parse_qs
 from aiohttp import web
-from odoo import models, api
-from odoo.tools import config
+from odoo import models, api, tools
 from odoo.service.server import server, ThreadedServer
 
 SOCKETIO_CLIENT_EVENT_MESSAGE_QUEUE = queue.Queue()
@@ -16,11 +15,11 @@ SOCKETIO_CLIENT_EVENT_MESSAGE_QUEUE = queue.Queue()
 
 class SocketIoServer(threading.Thread):
 
-    def __init__(self, port):
+    def __init__(self, conf):
         super().__init__(daemon=True)
         self.event_loop = None
-        self.host = "0.0.0.0"
-        self.port = port
+        self.host = conf['socketio_server_host']
+        self.port = int(conf['socketio_server_port'])
         self.send_queue = None
         self.user_sids = dict()
         self.sio = socketio.AsyncServer(
@@ -29,7 +28,7 @@ class SocketIoServer(threading.Thread):
             ping_interval=20, ping_timeout=60
         )
         self.app = web.Application()
-        self.sio.attach(self.app)
+        self.sio.attach(self.app, socketio_path=conf['socketio_handshake_path'])
         self._register_events()
 
     def run(self):
@@ -98,7 +97,7 @@ class SocketIoServer(threading.Thread):
                 continue
             callback, room = message.get('callback', None), message.get('room', None)
             await self.sio.emit(event, data=data, to=sid, room=room)
-            await asyncio.sleep(0)
+            await asyncio.sleep(0.001)
 
     async def _add_event_message(self, data):
         """
@@ -125,18 +124,18 @@ class OdooSocketIo(models.Model):
     socketio_server = None
 
     @api.model
-    def get_socketio_port(self):
+    def get_socketio_conf(self):
         """
-        Get the configured socketio running port from odoo.conf
+        Get the configured socketio running config from 'res.config.settings'
         """
-        return int(config.get("socketio_port", 3000))
+        return self.env['res.config.settings'].get_odoo_socketio_values()
 
     def _register_hook(self):
         super()._register_hook()
         if isinstance(server, ThreadedServer) and getattr(server, 'main_thread_id') != threading.current_thread().ident:
             return
         if multiprocessing.current_process().name == 'MainProcess':
-            OdooSocketIo.socketio_server = SocketIoServer(self.get_socketio_port())
+            OdooSocketIo.socketio_server = SocketIoServer(self.get_socketio_conf())
             OdooSocketIo.socketio_server.start()
             threading.Thread(target=self.handle_client_socketio_event_thread, daemon=True).start()
 

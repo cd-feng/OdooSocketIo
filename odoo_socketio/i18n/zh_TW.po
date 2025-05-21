@@ -1,0 +1,111 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* odoo_socketio
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-05-21 04:50+0000\n"
+"PO-Revision-Date: 2025-05-21 04:50+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: odoo_socketio
+#: model:ir.model,name:odoo_socketio.model_odoo_socketio
+msgid "Odoo SocketIo"
+msgstr "Odoo SocketIo通訊"
+
+#. module: odoo_socketio
+#: model:ir.model.fields,field_description:odoo_socketio.field_odoo_socketio__display_name
+msgid "Display Name"
+msgstr "顯示名稱"
+
+#. module: odoo_socketio
+#: model:ir.model.fields,field_description:odoo_socketio.field_odoo_socketio__id
+msgid "ID"
+msgstr "ID"
+
+#. module: odoo_socketio
+#: model:ir.actions.act_window,name:odoo_socketio.action_test_socketio_notify
+msgid "Test Socketio Notify"
+msgstr "測試Socketio通知"
+
+#. module: odoo_socketio
+#: model:ir.ui.menu,name:odoo_socketio.menu_socketio_settings
+msgid "SocketIo Settings"
+msgstr "SocketIo設定"
+
+#. module: odoo_socketio
+#: model:ir.model.fields,help:odoo_socketio.field_res_config_settings__socketio_server_host
+msgid "Socket.IO server host address"
+msgstr "Socket.IO伺服器主機地址"
+
+#. module: odoo_socketio
+#: model:ir.model.fields,help:odoo_socketio.field_res_config_settings__socketio_server_port
+msgid "Socket.IO server port number"
+msgstr "Socket.IO伺服器端口號"
+
+#. module: odoo_socketio
+#: model:ir.model.fields,help:odoo_socketio.field_res_config_settings__socketio_handshake_path
+msgid "Socket.IO handshake path"
+msgstr "Socket.IO握手路徑"
+
+#. module: odoo_socketio
+#: model:ir.model.fields,field_description:odoo_socketio.field_res_config_settings__socketio_server_host
+msgid "SocketIO Host"
+msgstr "SocketIO主機"
+
+#. module: odoo_socketio
+#: model:ir.model.fields,field_description:odoo_socketio.field_res_config_settings__socketio_server_port
+msgid "SocketIO Port"
+msgstr "SocketIO端口"
+
+#. module: odoo_socketio
+#: model:ir.model.fields,field_description:odoo_socketio.field_res_config_settings__socketio_handshake_path
+msgid "SocketIO Path"
+msgstr "SocketIO路徑"
+
+#. module: odoo_socketio
+#: model:ir.ui.view,name:odoo_socketio.view_res_config_settings_form_inherit
+msgid "Odoo SocketIo Config Settings"
+msgstr "Odoo SocketIo配置設定"
+
+#. module: odoo_socketio
+#: model:ir.ui.view,name:odoo_socketio.view_res_config_settings_form_inherit
+msgid "SocketIo"
+msgstr "SocketIo"
+
+#. module: odoo_socketio
+#: model:ir.ui.view,name:odoo_socketio.view_res_config_settings_form_inherit
+msgid "SocketIo Config Settings"
+msgstr "SocketIo配置設定"
+
+#. module: odoo_socketio
+#: model:ir.ui.view,name:odoo_socketio.view_res_config_settings_form_inherit
+msgid "The host address where the SocketIo server runs."
+msgstr "SocketIo伺服器運行的主機地址"
+
+#. module: odoo_socketio
+#: model:ir.ui.view,name:odoo_socketio.view_res_config_settings_form_inherit
+msgid "The port where the SocketIo server runs."
+msgstr "SocketIo伺服器運行的端口"
+
+#. module: odoo_socketio
+#: model:ir.ui.view,name:odoo_socketio.view_res_config_settings_form_inherit
+msgid "Default: /socket.io"
+msgstr "預設: /socket.io"
+
+#. module: odoo_socketio
+#: model:ir.ui.view,name:odoo_socketio.view_res_config_settings_form_inherit
+msgid "For environments without domain names or local development, you can directly use the IP+Port method to connect. In a production environment, you can use nginx to proxy the socketio handshake path."
+msgstr "對於沒有域名或本地開發環境，可以直接使用IP+端口方式連接。在生產環境中，可以使用nginx代理socketio握手路徑。"
+
+#. module: odoo_socketio
+#: model:ir.actions.act_window,name:odoo_socketio.action_odoo_socketio_config_settings
+msgid "Odoo SocketIo Config Settings Action"
+msgstr "Odoo SocketIo配置設定操作"

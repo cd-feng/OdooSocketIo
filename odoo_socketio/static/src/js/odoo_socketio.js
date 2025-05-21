@@ -6,6 +6,7 @@ import { user } from "@web/core/user";
 
 
 class SocketIoClient {
+
     constructor(env) {
         this.env = env;
         this.socketio = null;
@@ -19,18 +20,29 @@ class SocketIoClient {
 
     async _start() {
         try {
-            const port = await rpc("/web/dataset/call_kw", {
-                model: "odoo.socketio", method: "get_socketio_port",
+            let socketioConf = await rpc("/web/dataset/call_kw", {
+                model: "odoo.socketio",
+                method: "get_socketio_conf",
                 args: [], kwargs: {}
             });
-            if (!port || typeof io === 'undefined') return;
-            this.hostUrl = window.location.hostname + ':' + port;
+            if (!socketioConf || typeof io === 'undefined') return;
+            if (socketioConf['socketio_odoo_connection_type'] === 'port'){
+                this.hostUrl = `${window.location.hostname}:${socketioConf['socketio_server_port']}`;
+                this.socketioPath = null;
+            }else{
+                this.hostUrl = window.location.host;
+                this.socketioPath = socketioConf['socketio_handshake_path'] || '/socket.io';
+            }
             this.uid = user.userId;
             this.socketio = io(this.hostUrl, {
                 rememberUpgrade: true,
                 transports: ['websocket', 'long-polling'],
                 upgrade: true,
-                query: { uid: this.uid, room: this.room }
+                path: this.socketioPath,
+                query: {
+                    uid: this.uid,
+                    room: this.room
+                }
             });
             this._registerSocketIOEvents();
             this._processWaitOns();
@@ -41,7 +53,6 @@ class SocketIoClient {
 
     _registerSocketIOEvents() {
         if (!this.socketio) return;
-
         this.socketio.on('connect', () => {
             this.isConnected = true;
             console.log(`Successfully Connected To The SocketIo Service：${this.hostUrl}`);

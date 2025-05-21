@@ -6,7 +6,7 @@
     'author': "XueFeng.Su",
     'website': "https://github.com/cd-feng",
     'category': 'Tools/SocketIo',
-    'version': '18.0.0.1',
+    'version': '0.2',
     'depends': ['base'],
     "license": "AGPL-3",
     'installable': True,
@@ -17,6 +17,7 @@
     },
     'data': [
         'security/ir.model.access.csv',
+        'views/res_config_settings.xml'
         # 'views/res_users.xml'
     ],
     'images': [
