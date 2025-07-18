@@ -15,7 +15,7 @@ class SocketIoClient {
         this.bus = new EventBus();
         this.isConnected = false;
         this.wait_ons = [];
-        this.room = "odoo_browser_room";
+        this.room = ["odoo_browser_room"];
     }
 
     async _start() {

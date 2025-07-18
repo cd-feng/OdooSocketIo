@@ -2,6 +2,7 @@
 import logging
 import threading
 import asyncio
+import time
 import socketio
 import queue
 import multiprocessing
@@ -22,10 +23,13 @@ class SocketIoServer(threading.Thread):
         self.port = int(conf['socketio_server_port'])
         self.send_queue = None
         self.user_sids = dict()
+        self._user_sids_lock = threading.RLock()
+        self.sid_rooms = dict()  # {sid: [room1, room2, ...]}
+        self._sid_rooms_lock = threading.RLock()
         self.sio = socketio.AsyncServer(
-            async_mode='aiohttp', cors_allowed_origins=[],
+            async_mode='aiohttp', cors_allowed_origins=[], compression=True,
             allow_upgrades=True, transports=['websocket'],
-            ping_interval=20, ping_timeout=60
+            ping_interval=30, ping_timeout=60
         )
         self.app = web.Application()
         self.sio.attach(self.app, socketio_path=conf['socketio_handshake_path'])
@@ -48,9 +52,23 @@ class SocketIoServer(threading.Thread):
 
         def remove_user_sid(sid):
             """delete sid to user_sids"""
-            for key in self.user_sids:
-                if sid in self.user_sids[key]:
-                    self.user_sids[key].remove(sid)
+            with self._user_sids_lock:
+                for uid in list(self.user_sids.keys()):
+                    if sid in self.user_sids[uid]:
+                        self.user_sids[uid].remove(sid)
+                        if not self.user_sids[uid]:
+                            del self.user_sids[uid]
+                        break
+
+        async def remove_user_room(sid):
+            """delete user room"""
+            with self._sid_rooms_lock:
+                rooms = self.sid_rooms.pop(sid, [])
+            for room in rooms:
+                try:
+                    await self.sio.leave_room(sid, room)
+                except Exception:
+                    pass
 
         @self.sio.event
         async def connect(sid, environ):
@@ -58,29 +76,40 @@ class SocketIoServer(threading.Thread):
             if query_string:
                 params = parse_qs(query_string)
                 try:
-                    uid = int(params.get('uid', [None])[0])
-                    user_sids = self.user_sids.get(uid, [])
-                    if user_sids:
-                        user_sids.append(sid)
-                    else:
-                        self.user_sids[uid] = [sid]
-                except Exception:
-                    pass
+                    uid = int(params.get('uid', ['0'])[0] or '0')
+                    if uid > 0:
+                        with self._user_sids_lock:
+                            if uid not in self.user_sids:
+                                self.user_sids[uid] = []
+                            self.user_sids[uid].append(sid)
+                except Exception as e:
+                    logging.error(f"Error Socketio handling uid: {e}")
                 try:
-                    room = params.get('room', [None])[0]
-                    if room:
-                        await self.sio.enter_room(sid, room)
-                except Exception:
-                    pass
+                    rooms_param = params.get('room', [None])[0]
+                    if rooms_param:
+                        joined_rooms = []
+                        for room in [r.strip() for r in rooms_param.split(',') if r.strip()]:
+                            try:
+                                await self.sio.enter_room(sid, room)
+                                joined_rooms.append(room)
+                            except Exception as e:
+                                logging.error(f"Error joining room {room}: {e}")
+                        if joined_rooms:
+                            with self._sid_rooms_lock:
+                                self.sid_rooms[sid] = joined_rooms
+                            logging.info(f'SocketIo SID {sid} joined rooms: {joined_rooms}')
+                except Exception as e:
+                    logging.error(f"Error Socketio handling rooms: {e}")
             logging.info(f'New SocketIo Client Connection. SID: {sid}')
 
         @self.sio.event
         async def disconnect(sid):
             try:
                 remove_user_sid(sid)
+                await remove_user_room(sid)
             except Exception:
                 pass
-            logging.info('SocketIo Client Disconnect: {sid}'.format(sid=sid))
+            logging.info(f'SocketIo Client Disconnect: {sid}')
 
         @self.sio.on("*")
         async def handle_catch_all_event(event, sid, data):
@@ -91,13 +120,42 @@ class SocketIoServer(threading.Thread):
         Send Message To Client Task
         """
         while True:
-            message = await self.send_queue.get()
-            event, data, sid = message.get('event', None), message.get('data', {}), message.get('sid', None)
-            if not event:
-                continue
-            callback, room = message.get('callback', None), message.get('room', None)
-            await self.sio.emit(event, data=data, to=sid, room=room)
+            messages = []
+            try:
+                for _ in range(10):
+                    message = self.send_queue.get_nowait()
+                    messages.append(message)
+            except asyncio.QueueEmpty:
+                if not messages:
+                    messages.append(await self.send_queue.get())
+            for message in messages:
+                await self._emit_message(message)
             await asyncio.sleep(0.001)
+
+    async def _emit_message(self, message):
+        """
+        Emit Message with error handling
+        """
+        event, data, sid, room = message.get('event', None), message.get('data', {}), message.get('sid', None), message.get('room', None)
+        if not event:
+            return
+        try:
+            if sid:
+                if isinstance(sid, list):
+                    for s in sid:
+                        await self.sio.emit(event, data=data, to=s)
+                else:
+                    await self.sio.emit(event, data=data, to=sid)
+            elif room:
+                if isinstance(room, list):
+                    for r in room:
+                        await self.sio.emit(event, data=data, room=r)
+                else:
+                    await self.sio.emit(event, data=data, room=room)
+            else:
+                logging.warning(f"No target specified for event {event}")
+        except Exception as e:
+            logging.error(f"Socketio Failed to emit message: {e}")
 
     async def _add_event_message(self, data):
         """
@@ -112,8 +170,10 @@ class SocketIoServer(threading.Thread):
         """
         uid, sid = msg.get('uid', None), msg.get('sid', None)
         if not sid and uid:
-            msg['sid'] = self.user_sids.get(uid, None)
-        del msg['uid']
+            with self._user_sids_lock:
+                msg['sid'] = self.user_sids.get(uid, []).copy()
+        if 'uid' in msg:
+            del msg['uid']
         asyncio.run_coroutine_threadsafe(self._add_event_message(msg), self.event_loop)
 
 
@@ -158,15 +218,16 @@ class OdooSocketIo(models.Model):
         # with registry.cursor() as new_cr:
         while True:
             event, sid, data = SOCKETIO_CLIENT_EVENT_MESSAGE_QUEUE.get()
-            with self.pool.cursor() as new_cr:
-                self = self.with_env(self.env(cr=new_cr))
-                # Here you can add the logic code for handling default events
-                if not event or not data:
-                    continue
-                # Call other custom event methods
-                else:
+            # Here you can add the logic code for handling default events
+            if not event or not data:
+                continue
+            # Call other custom event methods
+            else:
+                with self.pool.cursor() as new_cr:
+                    self = self.with_env(self.env(cr=new_cr))
                     self.deal_custom_event(event, sid, data)
             SOCKETIO_CLIENT_EVENT_MESSAGE_QUEUE.task_done()
+            time.sleep(0.002)
 
     @api.model
     def deal_custom_event(self, event, sid, data):

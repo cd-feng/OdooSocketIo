@@ -3,7 +3,7 @@ import logging
 from odoo.models import BaseModel
 
 
-def push_socketio_event_msg(self, event, data, sid=None, uid=None, room=None, callback=None):
+def push_socketio_event_msg(self, event, data, sid=None, uid=None, room=None):
     """
     Push socketio event messages, distinguished by event name
     :param self:
@@ -12,15 +12,16 @@ def push_socketio_event_msg(self, event, data, sid=None, uid=None, room=None, ca
     :param sid:
     :param uid:
     :param room:
-    :param callback:
     :return:
     """
     try:
         # logging.info(f'{self.env.user.name} Push Socketio Event: {event} Data: {data}')
         message = {
-            'event': event, 'data': data,
-            'sid': sid, 'uid': uid,
-            'room': room, 'callback': callback
+            'event': event,
+            'data': data,
+            'sid': sid,
+            'uid': uid,
+            'room': room
         }
         self.env['odoo.socketio'].push_socketio_event(message)
     except Exception as e:
